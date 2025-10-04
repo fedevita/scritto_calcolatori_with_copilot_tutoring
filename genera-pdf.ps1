@@ -58,7 +58,6 @@ foreach ($categoria in $categorieDir) {
             continue
         }
         
-        $inputFile = $markdownFile.FullName
         $outputFile = Join-Path $esercizioPath ($markdownFile.BaseName + ".pdf")
         
         # Verifica se il PDF esiste gia e se Force non e specificato
@@ -97,15 +96,27 @@ foreach ($categoria in $categorieDir) {
             # Torna alla directory originale
             Set-Location $currentDir
             
-            if ($process.ExitCode -eq 0) {
+            # Gestione del file di errore
+            $errorMsg = ""
+            $hasErrors = $false
+            if (Test-Path (Join-Path $esercizioPath "pandoc_error.tmp")) {
+                $errorContent = Get-Content (Join-Path $esercizioPath "pandoc_error.tmp") -Raw -ErrorAction SilentlyContinue
+                if ($errorContent -and $errorContent.Trim() -ne "") {
+                    $errorMsg = $errorContent
+                    # Controlla se sono errori gravi o solo warning
+                    $hasErrors = $errorContent -match "Error|Fatal|failed" -and -not ($errorContent -match "Missing character.*font.*warning" -or $errorContent -match "WARNING")
+                }
+                # Rimuovi sempre il file temporaneo di errore
+                Remove-Item (Join-Path $esercizioPath "pandoc_error.tmp") -ErrorAction SilentlyContinue
+            }
+            
+            if ($process.ExitCode -eq 0 -and -not $hasErrors) {
                 Write-Host "   PDF generato: $($outputFile)" -ForegroundColor Green
+                if ($Verbose -and $errorMsg -and $errorMsg.Trim() -ne "") {
+                    Write-Host "      Note/Warning: $($errorMsg.Trim())" -ForegroundColor Yellow
+                }
                 $totalProcessed++
             } else {
-                $errorMsg = ""
-                if (Test-Path "pandoc_error.tmp") {
-                    $errorMsg = Get-Content "pandoc_error.tmp" -Raw
-                    Remove-Item "pandoc_error.tmp" -ErrorAction SilentlyContinue
-                }
                 Write-Host "   Errore nella generazione PDF per $esercizioName" -ForegroundColor Red
                 if ($Verbose -and $errorMsg) {
                     Write-Host "      Dettagli: $errorMsg" -ForegroundColor Red
@@ -122,9 +133,6 @@ foreach ($categoria in $categorieDir) {
     
     Write-Host ""
 }
-
-# Pulizia file temporanei
-Remove-Item "pandoc_error.tmp" -ErrorAction SilentlyContinue
 
 # Riepilogo finale
 Write-Host "RIEPILOGO GENERAZIONE PDF" -ForegroundColor Cyan
