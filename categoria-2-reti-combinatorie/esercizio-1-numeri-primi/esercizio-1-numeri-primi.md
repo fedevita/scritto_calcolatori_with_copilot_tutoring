@@ -52,7 +52,7 @@ Per 3 variabili ($x_2$, $x_1$, $x_0$), usiamo una tabella 2×4:
 - **Righe**: $x_2$ (0 o 1)
 - **Colonne**: $x_1x_0$ con ordine **Gray Code**: 00, 01, 11, 10
 
-⚠️ **IMPORTANTE**: L'ordine delle colonne non è 00, 01, 10, 11 ma **00, 01, 11, 10**. Questo è fondamentale perché tra colonne adiacenti cambia solo una variabile, permettendo i raggruppamenti!
+**IMPORTANTE**: L'ordine delle colonne non è 00, 01, 10, 11 ma **00, 01, 11, 10**. Questo è fondamentale perché tra colonne adiacenti cambia solo una variabile, permettendo i raggruppamenti!
 
 Riportiamo i valori di `Y` dalla tabella di verità:
 
@@ -75,25 +75,25 @@ Riportiamo i valori di `Y` dalla tabella di verità:
 Analizziamo la nostra K-map:
 ![Identificazione dei Gruppi](esercizio-1-numeri-primi-gruppi-kmap.png)
 
-**🟦 Gruppo A** (celle (0,11) e (0,10)):
-- Adiacenti orizzontalmente ✓
-- Gruppo di dimensione 2 ✓
+**[Gruppo A]** (celle (0,11) e (0,10)):
+- Adiacenti orizzontalmente [OK]
+- Gruppo di dimensione 2 [OK]
 - Analisi delle variabili:
   - $x_2 = 0$ in entrambe le celle → **si mantiene** come $\overline{x_2}$
   - $x_1 = 1$ in entrambe le celle → **si mantiene** come $x_1$
   - $x_0 = 1$ nella prima cella, $x_0 = 0$ nella seconda → **si elimina** perché cambia valore
 - **Termine**: $\overline{x_2}x_1$ (la variabile $x_0$ è eliminata perché assume valori diversi nel gruppo)
 
-**🟨 Gruppo B** (celle (1,01) e (1,11)):
-- Adiacenti orizzontalmente ✓  
-- Gruppo di dimensione 2 ✓
+**[Gruppo B]** (celle (1,01) e (1,11)):
+- Adiacenti orizzontalmente [OK]
+- Gruppo di dimensione 2 [OK]
 - Analisi delle variabili:
   - $x_2 = 1$ in entrambe le celle → **si mantiene** come $x_2$
   - $x_1 = 0$ nella prima cella, $x_1 = 1$ nella seconda → **si elimina** perché cambia valore
   - $x_0 = 1$ in entrambe le celle → **si mantiene** come $x_0$
 - **Termine**: $x_2x_0$ (la variabile $x_1$ è eliminata perché assume valori diversi nel gruppo)
 
-### ⚡ Funzione Semplificata
+### Funzione Semplificata
 
 Combinando i due gruppi otteniamo:
 $$
