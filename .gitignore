@@ -1,6 +1,7 @@
 # PDF Files - Generated automatically by genera-pdf.ps1
 # I PDF possono essere rigenerati con: .\genera-pdf.ps1
 *.pdf
+artifacts/
 
 # File temporanei di Pandoc
 pandoc_error.tmp

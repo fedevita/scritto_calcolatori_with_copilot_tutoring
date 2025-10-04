@@ -83,12 +83,13 @@ scritto_calcolatori_with_copilot_tutoring/
 ├── categoria-3-fsm-mealy/             # Macchine a stati Mealy
 ├── categoria-4-fsm-moore/             # Macchine a stati Moore
 ├── categoria-5-assembly-programmi/    # Assembly ARM base
-└── categoria-6-assembly-procedure/    # Assembly ARM procedure
+├── categoria-6-assembly-procedure/    # Assembly ARM procedure
+└── artifacts/                         # PDF generati (ignorata da Git)
 ```
 
 ## 📄 Generazione PDF
 
-Il progetto include uno script PowerShell per generare automaticamente i PDF di tutti gli esercizi:
+Il progetto include uno script PowerShell per generare automaticamente i PDF di tutti gli esercizi nella cartella `artifacts/`:
 
 ```powershell
 # Genera solo i PDF mancanti
@@ -104,11 +105,20 @@ Il progetto include uno script PowerShell per generare automaticamente i PDF di 
 .\genera-pdf.ps1 -Force -Verbose
 ```
 
+### 📁 Organizzazione PDF
+
+I PDF vengono salvati nella cartella `artifacts/` con la nomenclatura:
+- `categoria-1-algebra-booleana_esercizio-1-dimostrazione-algebrica.pdf`
+- `categoria-2-reti-combinatorie_esercizio-1-numeri-primi.pdf`
+- `categoria-3-fsm-mealy_esercizio-1-riconoscimento-1010.pdf`
+- E così via...
+
 **Note:**
-- I file PDF **non sono tracciati** da Git (esclusi tramite `.gitignore`)
+- La cartella `artifacts/` e tutti i PDF **non sono tracciati** da Git (esclusi tramite `.gitignore`)
 - I PDF vengono **rigenerati automaticamente** quando necessario
 - Lo script utilizza **Pandoc con XeLaTeX** per il rendering di formule matematiche
 - Richiede l'installazione di [Pandoc](https://pandoc.org/) nel sistema
+- I PDF locali nelle cartelle degli esercizi vengono mantenuti per riferimento durante lo sviluppo
 
 ## 🤝 Contributi
 

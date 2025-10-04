@@ -18,6 +18,13 @@ try {
     exit 1
 }
 
+# Crea la cartella artifacts se non esiste
+$artifactsDir = "artifacts"
+if (-not (Test-Path $artifactsDir)) {
+    New-Item -ItemType Directory -Path $artifactsDir | Out-Null
+    Write-Host "Creata cartella: $artifactsDir" -ForegroundColor Green
+}
+
 # Trova tutte le cartelle categoria
 $categorieDir = Get-ChildItem -Directory -Filter "categoria-*" | Sort-Object Name
 
@@ -59,9 +66,10 @@ foreach ($categoria in $categorieDir) {
         }
         
         $outputFile = Join-Path $esercizioPath ($markdownFile.BaseName + ".pdf")
+        $artifactFile = Join-Path $artifactsDir ("$($categoria.Name)_$($esercizioName).pdf")
         
-        # Verifica se il PDF esiste gia e se Force non e specificato
-        if ((Test-Path $outputFile) -and (-not $Force)) {
+        # Verifica se il PDF esiste gia nella cartella artifacts e se Force non e specificato
+        if ((Test-Path $artifactFile) -and (-not $Force)) {
             if ($Verbose) {
                 Write-Host "   PDF gia esistente per $esercizioName (usa -Force per sovrascrivere)" -ForegroundColor Gray
             }
@@ -111,7 +119,12 @@ foreach ($categoria in $categorieDir) {
             }
             
             if ($process.ExitCode -eq 0 -and -not $hasErrors) {
-                Write-Host "   PDF generato: $($outputFile)" -ForegroundColor Green
+                # Copia il PDF nella cartella artifacts con nome categoria_esercizio
+                Copy-Item $outputFile $artifactFile -Force
+                Write-Host "   PDF generato: $($artifactFile)" -ForegroundColor Green
+                if ($Verbose) {
+                    Write-Host "      File locale: $($outputFile)" -ForegroundColor Gray
+                }
                 if ($Verbose -and $errorMsg -and $errorMsg.Trim() -ne "") {
                     Write-Host "      Note/Warning: $($errorMsg.Trim())" -ForegroundColor Yellow
                 }
@@ -140,6 +153,9 @@ Write-Host "============================" -ForegroundColor Cyan
 Write-Host "PDF generati: $totalProcessed" -ForegroundColor Green
 Write-Host "PDF saltati: $totalSkipped" -ForegroundColor Yellow
 Write-Host "Errori: $totalErrors" -ForegroundColor Red
+if ($totalProcessed -gt 0) {
+    Write-Host "Cartella output: .\artifacts\" -ForegroundColor Cyan
+}
 Write-Host ""
 
 if ($totalProcessed -gt 0) {
