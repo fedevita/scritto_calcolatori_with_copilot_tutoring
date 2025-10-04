@@ -65,7 +65,6 @@ foreach ($categoria in $categorieDir) {
             continue
         }
         
-        $outputFile = Join-Path $esercizioPath ($markdownFile.BaseName + ".pdf")
         $artifactFile = Join-Path $artifactsDir ("$($categoria.Name)_$($esercizioName).pdf")
         
         # Verifica se il PDF esiste gia nella cartella artifacts e se Force non e specificato
@@ -81,13 +80,14 @@ foreach ($categoria in $categorieDir) {
         
         try {
             # Comando Pandoc con XeLaTeX per supporto LaTeX completo
-            # Cambio nella directory dell'esercizio per risolvere i percorsi relativi delle immagini
+            # Genera direttamente nella cartella artifacts usando percorsi assoluti
             $currentDir = Get-Location
-            Set-Location $esercizioPath
+            $absoluteArtifactFile = Join-Path $currentDir $artifactFile
+            $absoluteMarkdownFile = $markdownFile.FullName
             
             $pandocArgs = @(
-                $markdownFile.Name
-                "-o", ($markdownFile.BaseName + ".pdf")
+                $absoluteMarkdownFile
+                "-o", $absoluteArtifactFile
                 "--pdf-engine=xelatex"
                 "--standalone"
                 "--mathml"
@@ -96,35 +96,29 @@ foreach ($categoria in $categorieDir) {
             )
             
             if ($Verbose) {
-                Write-Host "   Comando: pandoc $($pandocArgs -join ' ') (dalla directory $esercizioPath)" -ForegroundColor Gray
+                Write-Host "   Comando: pandoc $($pandocArgs -join ' ')" -ForegroundColor Gray
             }
             
-            $process = Start-Process -FilePath "pandoc" -ArgumentList $pandocArgs -NoNewWindow -Wait -PassThru -RedirectStandardError "pandoc_error.tmp"
-            
-            # Torna alla directory originale
-            Set-Location $currentDir
+            # Crea un file temporaneo per gli errori nella directory artifacts
+            $errorFile = Join-Path $artifactsDir "pandoc_error_temp.tmp"
+            $process = Start-Process -FilePath "pandoc" -ArgumentList $pandocArgs -NoNewWindow -Wait -PassThru -RedirectStandardError $errorFile
             
             # Gestione del file di errore
             $errorMsg = ""
             $hasErrors = $false
-            if (Test-Path (Join-Path $esercizioPath "pandoc_error.tmp")) {
-                $errorContent = Get-Content (Join-Path $esercizioPath "pandoc_error.tmp") -Raw -ErrorAction SilentlyContinue
+            if (Test-Path $errorFile) {
+                $errorContent = Get-Content $errorFile -Raw -ErrorAction SilentlyContinue
                 if ($errorContent -and $errorContent.Trim() -ne "") {
                     $errorMsg = $errorContent
                     # Controlla se sono errori gravi o solo warning
                     $hasErrors = $errorContent -match "Error|Fatal|failed" -and -not ($errorContent -match "Missing character.*font.*warning" -or $errorContent -match "WARNING")
                 }
                 # Rimuovi sempre il file temporaneo di errore
-                Remove-Item (Join-Path $esercizioPath "pandoc_error.tmp") -ErrorAction SilentlyContinue
+                Remove-Item $errorFile -ErrorAction SilentlyContinue
             }
             
             if ($process.ExitCode -eq 0 -and -not $hasErrors) {
-                # Copia il PDF nella cartella artifacts con nome categoria_esercizio
-                Copy-Item $outputFile $artifactFile -Force
                 Write-Host "   PDF generato: $($artifactFile)" -ForegroundColor Green
-                if ($Verbose) {
-                    Write-Host "      File locale: $($outputFile)" -ForegroundColor Gray
-                }
                 if ($Verbose -and $errorMsg -and $errorMsg.Trim() -ne "") {
                     Write-Host "      Note/Warning: $($errorMsg.Trim())" -ForegroundColor Yellow
                 }
