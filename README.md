@@ -86,6 +86,30 @@ scritto_calcolatori_with_copilot_tutoring/
 └── categoria-6-assembly-procedure/    # Assembly ARM procedure
 ```
 
+## 📄 Generazione PDF
+
+Il progetto include uno script PowerShell per generare automaticamente i PDF di tutti gli esercizi:
+
+```powershell
+# Genera solo i PDF mancanti
+.\genera-pdf.ps1
+
+# Rigenera tutti i PDF
+.\genera-pdf.ps1 -Force
+
+# Output dettagliato
+.\genera-pdf.ps1 -Verbose
+
+# Rigenerazione completa con dettagli
+.\genera-pdf.ps1 -Force -Verbose
+```
+
+**Note:**
+- I file PDF **non sono tracciati** da Git (esclusi tramite `.gitignore`)
+- I PDF vengono **rigenerati automaticamente** quando necessario
+- Lo script utilizza **Pandoc con XeLaTeX** per il rendering di formule matematiche
+- Richiede l'installazione di [Pandoc](https://pandoc.org/) nel sistema
+
 ## 🤝 Contributi
 
 Questo è un progetto educativo per lo scritto di Calcolatori.
