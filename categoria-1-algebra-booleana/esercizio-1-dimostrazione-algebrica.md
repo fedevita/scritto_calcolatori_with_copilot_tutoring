@@ -51,7 +51,7 @@ $$
 = AC + \overline{A}B\overline{C}
 $$
 
-**QED** ✓
+**QED** (dimostrato)
 
 ---
 
@@ -76,14 +76,14 @@ La funzione vale 1 solo per le combinazioni: 010, 101, 111 (righe 2, 5, 7 della 
 
 ## Schema circuitale MUX 8:1
 
-![Schema MUX 8:1](../assets/esercizio-1-dimostrazione-algebrica-schema-mux.jpg)
+![Schema MUX 8:1](assets/esercizio-1-dimostrazione-algebrica-schema-mux.jpg)
 
 **Configurazione per la funzione $AC + \overline{A}B\overline{C}$:**
 - **Selezioni**: $S_2 = A$, $S_1 = B$, $S_0 = C$  
 - **Ingressi**: $I_0 = 0$, $I_1 = 0$, $I_2 = 1$, $I_3 = 0$, $I_4 = 0$, $I_5 = 1$, $I_6 = 0$, $I_7 = 1$
 
 **Funzionamento:**
-- ABC = 010 → seleziona $I_2 = 1$ → Y = 1 ✓
-- ABC = 101 → seleziona $I_5 = 1$ → Y = 1 ✓  
-- ABC = 111 → seleziona $I_7 = 1$ → Y = 1 ✓
+- ABC = 010 → seleziona $I_2 = 1$ → Y = 1 (corretto)
+- ABC = 101 → seleziona $I_5 = 1$ → Y = 1 (corretto)
+- ABC = 111 → seleziona $I_7 = 1$ → Y = 1 (corretto)
 - Tutte le altre combinazioni → Y = 0
