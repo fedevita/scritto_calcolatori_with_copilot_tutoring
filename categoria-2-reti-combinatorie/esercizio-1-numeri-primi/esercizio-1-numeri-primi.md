@@ -101,3 +101,40 @@ Y = \overline{x_2}x_1 + x_2x_0
 $$
 
 ## Soluzione Punto 4: Schema Circuitale
+
+La funzione semplificata $Y = \overline{x_2}x_1 + x_2x_0$ richiede:
+
+### Componenti necessari:
+- **1 porta NOT** per $\overline{x_2}$
+- **2 porte AND** per i prodotti $\overline{x_2}x_1$ e $x_2x_0$
+- **1 porta OR** per la somma finale
+
+### Schema logico (rappresentazione testuale):
+
+```
+   x2 ----[NOT]---- x2_barra
+                        |
+   x1 ------------------+---[AND]--- termine1
+                            
+   x0 ---------------------------+
+                                 |
+   x2 --------------------------+---[AND]--- termine2
+                                     
+        termine1 ----[OR]---- Y
+                      |
+        termine2 ------+
+```
+
+### Descrizione del circuito:
+1. **Ingresso x2** viene invertito tramite porta NOT per ottenere x2_barra
+2. **Prima porta AND**: riceve x2_barra e x1 -> produce termine1 = x2_barra AND x1
+3. **Seconda porta AND**: riceve x2 e x0 -> produce termine2 = x2 AND x0  
+4. **Porta OR finale**: riceve termine1 e termine2 -> produce Y = termine1 OR termine2
+
+### Verifica con truth table:
+- Per (x2,x1,x0) = (0,1,1): Y = 1*1 + 0*1 = 1 [OK] (numero 3, primo)
+- Per (x2,x1,x0) = (1,0,1): Y = 0*0 + 1*1 = 1 [OK] (numero 5, primo)  
+- Per (x2,x1,x0) = (1,1,1): Y = 0*1 + 1*1 = 1 [OK] (numero 7, primo)
+- Per (x2,x1,x0) = (0,0,0): Y = 1*0 + 0*0 = 0 [OK] (numero 0, non primo)
+
+Il circuito implementa correttamente la funzione di rilevamento dei numeri primi da 0 a 7.
