@@ -12,9 +12,10 @@ if (-not (Test-Path $logsDir)) {
     New-Item -ItemType Directory -Path $logsDir | Out-Null
 }
 
-# Crea il file di log con timestamp
+# Crea il file di log con timestamp e percorso assoluto
 $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-$logFile = Join-Path $logsDir "genera-pdf_$timestamp.log"
+$absoluteLogsDir = Join-Path (Get-Location) $logsDir
+$logFile = Join-Path $absoluteLogsDir "genera-pdf_$timestamp.log"
 
 # Funzione per scrivere sia a console che a log
 function Write-Log {
@@ -113,14 +114,18 @@ foreach ($categoria in $categorieDir) {
         
         try {
             # Comando Pandoc con XeLaTeX per supporto LaTeX completo
-            # Genera direttamente nella cartella artifacts usando percorsi assoluti
+            # Eseguiamo Pandoc dalla directory dell'esercizio per accesso alle immagini
             $currentDir = Get-Location
+            $esercizioDir = $markdownFile.DirectoryName
             $absoluteArtifactFile = Join-Path $currentDir $artifactFile
-            $absoluteMarkdownFile = $markdownFile.FullName
+            $markdownFileName = $markdownFile.Name
+            
+            # Cambia nella directory dell'esercizio per accedere alle immagini
+            Set-Location $esercizioDir
             
             $pandocArgs = @(
-                $absoluteMarkdownFile
-                "-o", $absoluteArtifactFile
+                $markdownFileName  # Nome relativo del file markdown
+                "-o", $absoluteArtifactFile  # Percorso assoluto per il PDF di output
                 "--pdf-engine=xelatex"
                 "--standalone"
                 "--mathml"
@@ -132,8 +137,8 @@ foreach ($categoria in $categorieDir) {
                 Write-Log "   Comando: pandoc $($pandocArgs -join ' ')" "Gray"
             }
             
-            # Crea un file temporaneo per gli errori nella directory logs
-            $errorFile = Join-Path $logsDir "pandoc_error_${categoria.Name}_${esercizioName}_$timestamp.tmp"
+            # Crea un file temporaneo per gli errori nella directory logs (percorso assoluto)
+            $errorFile = Join-Path $absoluteLogsDir "pandoc_error_${categoria.Name}_${esercizioName}_$timestamp.tmp"
             $process = Start-Process -FilePath "pandoc" -ArgumentList $pandocArgs -NoNewWindow -Wait -PassThru -RedirectStandardError $errorFile
             
             # Gestione del file di errore
@@ -175,6 +180,9 @@ foreach ($categoria in $categorieDir) {
                 }
                 $totalErrors++
             }
+            
+            # Torna sempre alla directory originale dopo l'esecuzione di Pandoc
+            Set-Location $currentDir
         } catch {
             # Assicurati di tornare alla directory originale anche in caso di eccezione
             Set-Location $currentDir
