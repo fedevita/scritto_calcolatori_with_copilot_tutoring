@@ -1,4 +1,4 @@
-# Esercizio 5
+# Esercizio
 
 Scrivere un programma in **Assembly ARM** che, nella sezione `.data`, contenga in memoria **un array di 10 numeri interi positivi**.
 

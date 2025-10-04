@@ -1,4 +1,4 @@
-# Esercizio 1
+# Esercizio
 
 Dimostrare, mediante passaggi algebrici, che:
 $$

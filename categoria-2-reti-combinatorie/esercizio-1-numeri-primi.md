@@ -1,4 +1,4 @@
-# Esercizio 2
+# Esercizio
 
 Progettare una rete combinatoria con **3 ingressi** ($x_2$, $x_1$, $x_0$) e un'unica **uscita** `Y`, tale che:
 

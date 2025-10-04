@@ -1,4 +1,4 @@
-# Esercizio 4
+# Esercizio
 
 Sintetizzare una **macchina a stati finiti di Moore** che implementi un **contatore modulo 6** con le seguenti caratteristiche:
 

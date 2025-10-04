@@ -1,4 +1,4 @@
-# Esercizio 6
+# Esercizio
 
 Scrivere una **procedura in Assembly ARM** che, dato un vettore di interi, copi nel secondo vettore soltanto **gli elementi maggiori di zero e moltiplicati per 2**.
 

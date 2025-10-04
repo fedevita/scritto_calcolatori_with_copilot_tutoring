@@ -1,4 +1,4 @@
-# Esercizio 3
+# Esercizio
 
 Sintetizzare una **macchina a stati finiti di Mealy** con:
 
