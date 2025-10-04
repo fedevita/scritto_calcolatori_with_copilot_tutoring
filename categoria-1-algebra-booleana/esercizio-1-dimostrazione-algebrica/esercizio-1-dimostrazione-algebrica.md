@@ -76,7 +76,7 @@ La funzione vale 1 solo per le combinazioni: 010, 101, 111 (righe 2, 5, 7 della 
 
 ## Schema circuitale MUX 8:1
 
-![Schema MUX 8:1](assets/esercizio-1-dimostrazione-algebrica-schema-mux.jpg)
+![Schema MUX 8:1](esercizio-1-dimostrazione-algebrica-schema-mux.jpg)
 
 **Configurazione per la funzione $AC + \overline{A}B\overline{C}$:**
 - **Selezioni**: $S_2 = A$, $S_1 = B$, $S_0 = C$  
