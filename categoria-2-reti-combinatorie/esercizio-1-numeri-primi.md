@@ -73,7 +73,7 @@ Riportiamo i valori di `Y` dalla tabella di verità:
 ### Identificazione dei Gruppi
 
 Analizziamo la nostra K-map:
-![Identificazione dei Gruppi](assets/esercizio-2-numeri-primi-gruppi-kmap.png)
+![Identificazione dei Gruppi](assets/esercizio-1-numeri-primi-gruppi-kmap.png)
 
 **🟦 Gruppo A** (celle (0,11) e (0,10)):
 - Adiacenti orizzontalmente ✓
