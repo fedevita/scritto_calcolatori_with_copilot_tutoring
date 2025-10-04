@@ -118,6 +118,30 @@ I PDF vengono salvati nella cartella `artifacts/` con la nomenclatura:
 - I PDF vengono **rigenerati automaticamente** quando necessario
 - Lo script utilizza **Pandoc con XeLaTeX** per il rendering di formule matematiche
 - Richiede l'installazione di [Pandoc](https://pandoc.org/) nel sistema
+
+### 📊 Sistema di Logging
+
+Lo script include un sistema di logging completo che traccia tutte le operazioni:
+
+```powershell
+# I log vengono salvati automaticamente in: logs/genera-pdf_YYYY-MM-DD_HH-mm-ss.log
+```
+
+**Caratteristiche del sistema di logging:**
+- **Timestamp automatico** per ogni operazione
+- **Output duplicato** su console e file di log
+- **File di errore preservati** per debugging (solo quelli rilevanti)
+- **Log strutturati** con dettagli sui comandi Pandoc eseguiti
+- **Gestione errori avanzata** con distinzione tra warning e errori fatali
+
+**File generati:**
+- `logs/genera-pdf_2025-10-04_18-31-51.log` - Log completo dell'esecuzione
+- `logs/pandoc_error_*.tmp` - File di errore temporanei (solo se rilevanti)
+
+**Note:**
+- La cartella `logs/` **non è tracciata** da Git (esclusa tramite `.gitignore`)
+- I log permettono di diagnosticare problemi di generazione PDF
+- I file di errore vengono preservati solo se contengono informazioni utili
 - I PDF locali nelle cartelle degli esercizi vengono mantenuti per riferimento durante lo sviluppo
 
 ## 🤝 Contributi

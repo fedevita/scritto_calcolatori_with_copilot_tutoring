@@ -3,11 +3,10 @@
 *.pdf
 artifacts/
 
-# File temporanei di Pandoc
-pandoc_error.tmp
-
-# Log files
+# Log files from genera-pdf.ps1 and temporary files
+logs/
 *.log
+pandoc_error*.tmp
 
 # OS generated files
 .DS_Store

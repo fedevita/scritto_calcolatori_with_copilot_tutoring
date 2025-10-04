@@ -6,13 +6,46 @@ param(
     [switch]$Verbose # Output dettagliato
 )
 
-Write-Host "Generatore PDF Esercizi Calcolatori" -ForegroundColor Cyan
-Write-Host "=======================================" -ForegroundColor Cyan
+# Configurazione logging - Crea la cartella logs se non esiste
+$logsDir = "logs"
+if (-not (Test-Path $logsDir)) {
+    New-Item -ItemType Directory -Path $logsDir | Out-Null
+}
+
+# Crea il file di log con timestamp
+$timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
+$logFile = Join-Path $logsDir "genera-pdf_$timestamp.log"
+
+# Funzione per scrivere sia a console che a log
+function Write-Log {
+    param(
+        [string]$Message,
+        [string]$Color = "White",
+        [switch]$NoConsole
+    )
+    
+    $timestampMsg = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $Message"
+    
+    if (-not $NoConsole) {
+        if ($Color -ne "White") {
+            Write-Host $Message -ForegroundColor $Color
+        } else {
+            Write-Host $Message
+        }
+    }
+    
+    Add-Content -Path $logFile -Value $timestampMsg -Encoding UTF8
+}
+
+Write-Log "Generatore PDF Esercizi Calcolatori" "Cyan"
+Write-Log "=======================================" "Cyan"
+Write-Log "Avvio generazione PDF - Script con logging completo" "Cyan"
+Write-Log "File di log: $logFile" "Gray"
 
 # Verifica che Pandoc sia installato
 try {
     $pandocVersion = pandoc --version | Select-Object -First 1
-    Write-Host "Pandoc trovato: $pandocVersion" -ForegroundColor Green
+    Write-Log "Pandoc trovato: $pandocVersion" "Green"
 } catch {
     Write-Error "Pandoc non trovato! Installa Pandoc prima di eseguire questo script."
     exit 1
@@ -22,33 +55,33 @@ try {
 $artifactsDir = "artifacts"
 if (-not (Test-Path $artifactsDir)) {
     New-Item -ItemType Directory -Path $artifactsDir | Out-Null
-    Write-Host "Creata cartella: $artifactsDir" -ForegroundColor Green
+    Write-Log "Creata cartella: $artifactsDir" "Green"
 }
-
 # Trova tutte le cartelle categoria
 $categorieDir = Get-ChildItem -Directory -Filter "categoria-*" | Sort-Object Name
 
 if ($categorieDir.Count -eq 0) {
+    Write-Log "Nessuna cartella categoria trovata!" "Yellow"
     Write-Warning "Nessuna cartella categoria trovata!"
     exit 0
 }
 
-Write-Host "Trovate $($categorieDir.Count) categorie:" -ForegroundColor Yellow
-$categorieDir | ForEach-Object { Write-Host "   - $($_.Name)" -ForegroundColor Gray }
-Write-Host ""
+Write-Log "Trovate $($categorieDir.Count) categorie:" "Yellow"
+$categorieDir | ForEach-Object { Write-Log "   - $($_.Name)" "Gray" }
+Write-Log ""
 
 $totalProcessed = 0
 $totalSkipped = 0
 $totalErrors = 0
 
 foreach ($categoria in $categorieDir) {
-    Write-Host "Processando categoria: $($categoria.Name)" -ForegroundColor Blue
+    Write-Log "Processando categoria: $($categoria.Name)" "Blue"
     
     # Trova tutte le cartelle esercizio nella categoria
     $eserciziDir = Get-ChildItem -Path $categoria.FullName -Directory -Filter "esercizio-*" | Sort-Object Name
     
     if ($eserciziDir.Count -eq 0) {
-        Write-Host "   Nessun esercizio trovato in $($categoria.Name)" -ForegroundColor Yellow
+        Write-Log "   Nessun esercizio trovato in $($categoria.Name)" "Yellow"
         continue
     }
     
@@ -60,7 +93,7 @@ foreach ($categoria in $categorieDir) {
         $markdownFile = Get-ChildItem -Path $esercizioPath -Filter "*.md" | Select-Object -First 1
         
         if (-not $markdownFile) {
-            Write-Host "   Nessun file .md trovato in $esercizioName" -ForegroundColor Red
+            Write-Log "   Nessun file .md trovato in $esercizioName" "Red"
             $totalErrors++
             continue
         }
@@ -70,13 +103,13 @@ foreach ($categoria in $categorieDir) {
         # Verifica se il PDF esiste gia nella cartella artifacts e se Force non e specificato
         if ((Test-Path $artifactFile) -and (-not $Force)) {
             if ($Verbose) {
-                Write-Host "   PDF gia esistente per $esercizioName (usa -Force per sovrascrivere)" -ForegroundColor Gray
+                Write-Log "   PDF gia esistente per $esercizioName (usa -Force per sovrascrivere)" "Gray"
             }
             $totalSkipped++
             continue
         }
         
-        Write-Host "   Generando PDF per: $esercizioName" -ForegroundColor Green
+        Write-Log "   Generando PDF per: $esercizioName" "Green"
         
         try {
             # Comando Pandoc con XeLaTeX per supporto LaTeX completo
@@ -96,74 +129,86 @@ foreach ($categoria in $categorieDir) {
             )
             
             if ($Verbose) {
-                Write-Host "   Comando: pandoc $($pandocArgs -join ' ')" -ForegroundColor Gray
+                Write-Log "   Comando: pandoc $($pandocArgs -join ' ')" "Gray"
             }
             
-            # Crea un file temporaneo per gli errori nella directory artifacts
-            $errorFile = Join-Path $artifactsDir "pandoc_error_temp.tmp"
+            # Crea un file temporaneo per gli errori nella directory logs
+            $errorFile = Join-Path $logsDir "pandoc_error_${categoria.Name}_${esercizioName}_$timestamp.tmp"
             $process = Start-Process -FilePath "pandoc" -ArgumentList $pandocArgs -NoNewWindow -Wait -PassThru -RedirectStandardError $errorFile
             
             # Gestione del file di errore
             $errorMsg = ""
             $hasErrors = $false
+            $keepErrorFile = $false
+            
             if (Test-Path $errorFile) {
                 $errorContent = Get-Content $errorFile -Raw -ErrorAction SilentlyContinue
                 if ($errorContent -and $errorContent.Trim() -ne "") {
                     $errorMsg = $errorContent
                     # Controlla se sono errori gravi o solo warning
                     $hasErrors = $errorContent -match "Error|Fatal|failed" -and -not ($errorContent -match "Missing character.*font.*warning" -or $errorContent -match "WARNING")
+                    
+                    # Mantieni il file se contiene informazioni rilevanti (errori o warning significativi)
+                    $keepErrorFile = $hasErrors -or ($errorContent -match "WARNING" -and $errorContent.Length -gt 50)
+                    
+                    if ($keepErrorFile) {
+                        Write-Log "   File di errore salvato: $errorFile" "Yellow" -NoConsole
+                    }
                 }
-                # Rimuovi sempre il file temporaneo di errore
-                Remove-Item $errorFile -ErrorAction SilentlyContinue
+                
+                # Rimuovi il file temporaneo se non contiene informazioni rilevanti
+                if (-not $keepErrorFile) {
+                    Remove-Item $errorFile -ErrorAction SilentlyContinue
+                }
             }
             
             if ($process.ExitCode -eq 0 -and -not $hasErrors) {
-                Write-Host "   PDF generato: $($artifactFile)" -ForegroundColor Green
+                Write-Log "   PDF generato: $($artifactFile)" "Green"
                 if ($Verbose -and $errorMsg -and $errorMsg.Trim() -ne "") {
-                    Write-Host "      Note/Warning: $($errorMsg.Trim())" -ForegroundColor Yellow
+                    Write-Log "      Note/Warning: $($errorMsg.Trim())" "Yellow"
                 }
                 $totalProcessed++
             } else {
-                Write-Host "   Errore nella generazione PDF per $esercizioName" -ForegroundColor Red
+                Write-Log "   Errore nella generazione PDF per $esercizioName" "Red"
                 if ($Verbose -and $errorMsg) {
-                    Write-Host "      Dettagli: $errorMsg" -ForegroundColor Red
+                    Write-Log "      Dettagli: $errorMsg" "Red"
                 }
                 $totalErrors++
             }
         } catch {
             # Assicurati di tornare alla directory originale anche in caso di eccezione
             Set-Location $currentDir
-            Write-Host "   Eccezione durante la generazione per $esercizioName : $($_.Exception.Message)" -ForegroundColor Red
+            Write-Log "   Eccezione durante la generazione per $esercizioName : $($_.Exception.Message)" "Red"
             $totalErrors++
         }
     }
     
-    Write-Host ""
+    Write-Log ""
 }
 
 # Riepilogo finale
-Write-Host "RIEPILOGO GENERAZIONE PDF" -ForegroundColor Cyan
-Write-Host "============================" -ForegroundColor Cyan
-Write-Host "PDF generati: $totalProcessed" -ForegroundColor Green
-Write-Host "PDF saltati: $totalSkipped" -ForegroundColor Yellow
-Write-Host "Errori: $totalErrors" -ForegroundColor Red
+Write-Log "RIEPILOGO GENERAZIONE PDF" "Cyan"
+Write-Log "============================" "Cyan"
+Write-Log "PDF generati: $totalProcessed" "Green"
+Write-Log "PDF saltati: $totalSkipped" "Yellow"
+Write-Log "Errori: $totalErrors" "Red"
 if ($totalProcessed -gt 0) {
-    Write-Host "Cartella output: .\artifacts\" -ForegroundColor Cyan
+    Write-Log "Cartella output: .\artifacts\" "Cyan"
 }
-Write-Host ""
+Write-Log ""
 
 if ($totalProcessed -gt 0) {
-    Write-Host "Generazione PDF completata con successo!" -ForegroundColor Green
+    Write-Log "Generazione PDF completata con successo!" "Green"
 } elseif ($totalSkipped -gt 0 -and $totalErrors -eq 0) {
-    Write-Host "Tutti i PDF sono gia aggiornati. Usa -Force per rigenerare." -ForegroundColor Blue
+    Write-Log "Tutti i PDF sono gia aggiornati. Usa -Force per rigenerare." "Blue"
 } else {
-    Write-Host "Controlla gli errori sopra riportati." -ForegroundColor Yellow
+    Write-Log "Controlla gli errori sopra riportati." "Yellow"
 }
 
 # Esempio di utilizzo
-Write-Host ""
-Write-Host "ESEMPI DI UTILIZZO:" -ForegroundColor Cyan
-Write-Host "   .\genera-pdf.ps1                 # Genera solo i PDF mancanti"
-Write-Host "   .\genera-pdf.ps1 -Force          # Rigenera tutti i PDF"
-Write-Host "   .\genera-pdf.ps1 -Verbose        # Output dettagliato"
-Write-Host "   .\genera-pdf.ps1 -Force -Verbose # Rigenera tutto con dettagli"
+Write-Log ""
+Write-Log "ESEMPI DI UTILIZZO:" "Cyan"
+Write-Log "   .\genera-pdf.ps1                 # Genera solo i PDF mancanti"
+Write-Log "   .\genera-pdf.ps1 -Force          # Rigenera tutti i PDF"
+Write-Log "   .\genera-pdf.ps1 -Verbose        # Output dettagliato"
+Write-Log "   .\genera-pdf.ps1 -Force -Verbose # Rigenera tutto con dettagli"
