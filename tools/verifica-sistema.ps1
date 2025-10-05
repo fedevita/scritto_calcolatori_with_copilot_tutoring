@@ -83,7 +83,7 @@ function Get-PandocInfo {
     try {
         $cmd = Test-CommandExists "pandoc"
         if ($cmd.Exists) {
-            $output = & pandoc --version 2>$null
+            $output = & pandoc --version 2>$null | Select-Object -First 1
             if ($output -match "pandoc\s+([\d\.]+)") {
                 $cmd.Version = $matches[1]
             }
@@ -99,7 +99,7 @@ function Get-PDFtkInfo {
     try {
         $cmd = Test-CommandExists "pdftk"
         if ($cmd.Exists) {
-            $output = & pdftk --version 2>$null
+            $output = & pdftk --version 2>$null | Select-Object -First 1
             if ($output -match "pdftk\s+([\d\.]+)") {
                 $cmd.Version = $matches[1]
             } elseif ($output -match "pdftk") {
@@ -123,9 +123,9 @@ function Get-PowerShellInfo {
 
 function Test-LaTeXSupport {
     try {
-        # Verifica se Pandoc può usare XeLaTeX
-        $output = & pandoc --list-pdf-engines 2>$null
-        return ($output -contains "xelatex")
+        # Verifica se XeLaTeX è disponibile direttamente
+        $output = & xelatex --version 2>$null
+        return [bool]($output -match "XeTeX")
     }
     catch {
         return $false

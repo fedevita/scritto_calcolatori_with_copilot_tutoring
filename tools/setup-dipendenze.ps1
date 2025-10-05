@@ -1,4 +1,4 @@
-#Requires -Version 5.1
+﻿#Requires -Version 5.1
 
 <#
 .SYNOPSIS
@@ -9,7 +9,9 @@
     - Pandoc (conversione Markdown → PDF con supporto LaTeX)
     - PDFtk (unione e manipolazione PDF)
     
-    Supporta installazione automatica su Windows con fallback manuale.
+Write-Host "\nRISULTATO FINALE:" -ForegroundColor $(if ($finalPandoc -and $finalPDFtk) { "Green" } else { "Yellow" })
+Write-Host "  Pandoc: $(if ($finalPandoc) { "[OK]" } else { "[X] Mancante" })"
+Write-Host "  PDFtk:  $(if ($finalPDFtk) { "[OK]" } else { "[X] Mancante" })" Supporta installazione automatica su Windows con fallback manuale.
 
 .PARAMETER Force
     Forza il download e reinstallazione anche se le dipendenze sono gia presenti
@@ -243,8 +245,8 @@ $pdftkInstalled = Test-CommandExists "pdftk"
 $pdftkVersion = if ($pdftkInstalled) { Get-PDFtkVersion } else { $null }
 
 Write-Host "`nSTATO DIPENDENZE ATTUALI:" -ForegroundColor Yellow
-Write-Host "  Pandoc: $(if ($pandocInstalled) { "✓ Installato (v$pandocVersion)" } else { "✗ Non trovato" })"
-Write-Host "  PDFtk:  $(if ($pdftkInstalled) { '✓ Installato' + $(if ($pdftkVersion) { " (v$pdftkVersion)" } else { '' }) } else { '✗ Non trovato' })"
+Write-Host "  Pandoc: $(if ($pandocInstalled) { "[OK] Installato (v$pandocVersion)" } else { "[X] Non trovato" })"
+Write-Host "  PDFtk:  $(if ($pdftkInstalled) { '[OK] Installato' + $(if ($pdftkVersion) { " (v$pdftkVersion)" } else { '' }) } else { '[X] Non trovato' })"
 
 # === INSTALLAZIONE PANDOC ===
 if (!$SkipPandoc) {
