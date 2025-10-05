@@ -133,6 +133,7 @@ foreach ($categoria in $categorieDir) {
                 "--to=pdf"
                 "-V", "pagestyle=empty"  # Rimuove header e footer inclusi i numeri di pagina
                 "-V", "geometry:margin=2cm"  # Margini standardizzati
+                "--dpi=300"  # Alta risoluzione per le immagini
             )
             
             if ($Verbose) {
@@ -317,8 +318,8 @@ InfoValue: D:$(Get-Date -Format 'yyyyMMddHHmmss')+01'00'
                     
                     Set-Content -Path $bookmarksFile -Value ($bookmarkContent -join "`n") -Encoding UTF8
                     
-                    # Comando per aggiornare metadati, aggiungere segnalibri e comprimere
-                    $pdftkUpdateCommand = "pdftk `"$dispensaTempPdf`" update_info `"$metadataFile`" output `"$dispensaPdf`" compress"
+                    # Comando per aggiornare metadati senza compressione
+                    $pdftkUpdateCommand = "pdftk `"$dispensaTempPdf`" update_info `"$metadataFile`" output `"$dispensaPdf`""
                     
                     if ($Verbose) {
                         Write-Log "   Comando pdftk (update): $pdftkUpdateCommand" "Gray"
