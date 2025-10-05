@@ -8,6 +8,15 @@ logs/
 *.log
 pandoc_error*.tmp
 
+# Tools: Downloaded installers (except the included pandoc-installer.msi)
+tools/installers/*.exe
+tools/installers/pandoc-latest.msi
+tools/installers/pdftk-*.exe
+
+# Tools: Temporary and cache files
+tools/installers/temp/
+tools/cache/
+
 # OS generated files
 .DS_Store
 .DS_Store?

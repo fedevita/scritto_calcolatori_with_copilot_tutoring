@@ -173,6 +173,27 @@ Lo script include un sistema di logging completo che traccia tutte le operazioni
 - I file di errore vengono preservati solo se contengono informazioni utili
 - Lo script gestisce automaticamente la pulizia dei file temporanei
 
+### 🛠️ Setup Automatico Dipendenze
+
+**Installazione semplificata (RACCOMANDATO):**
+```powershell
+# Setup automatico di tutte le dipendenze
+.\tools\setup-dipendenze.ps1
+
+# Verifica installazione
+.\tools\verifica-sistema.ps1
+
+# Genera PDF
+.\genera-pdf.ps1
+```
+
+**Vantaggi del setup automatico:**
+- ✅ **Download automatico** delle versioni più recenti
+- ✅ **Installazione silenziosa** senza intervento utente
+- ✅ **Verifica post-installazione** e diagnostica
+- ✅ **Logging completo** per troubleshooting
+- ✅ **Supporto fallback** per installazione manuale
+
 ### 🛠️ Prerequisiti Tecnici
 
 **Software richiesto:**
@@ -180,9 +201,15 @@ Lo script include un sistema di logging completo che traccia tutte le operazioni
 - [PDFtk](https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/) - Per l'unione dei PDF
 - PowerShell - Per l'esecuzione dello script
 
+**Installazione manuale** (se il setup automatico non funziona):
+1. Scarica e installa [Pandoc](https://pandoc.org/)
+2. Scarica e installa [PDFtk](https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/)
+3. Riavvia PowerShell e verifica: `.\tools\verifica-sistema.ps1`
+
 **Controllo automatico:**
 - Lo script verifica automaticamente la presenza di Pandoc e PDFtk
-- Fornisce istruzioni di installazione se mancanti
+- Fornisce suggerimenti per setup automatico se mancanti
+- Include diagnostica dettagliata per troubleshooting
 
 ## 📚 Come Utilizzare la Dispensa
 
@@ -197,6 +224,33 @@ Lo script include un sistema di logging completo che traccia tutte le operazioni
 2. **Stampa sezioni specifiche**: Usa i PDF singoli per argomenti mirati
 3. **Aggiorna contenuto**: Modifica i Markdown e rigenera con `-Force`
 4. **Mantieni aggiornato**: Il repository è la fonte di verità
+
+## 🔧 Strumenti e Utilità
+
+### 📋 Script Disponibili:
+
+| Script | Scopo | Utilizzo |
+|--------|-------|----------|
+| `.\genera-pdf.ps1` | **Generazione PDF principale** | `.\genera-pdf.ps1 -Force -Verbose` |
+| `.\tools\setup-dipendenze.ps1` | **Setup automatico dipendenze** | `.\tools\setup-dipendenze.ps1` |
+| `.\tools\verifica-sistema.ps1` | **Diagnostica sistema** | `.\tools\verifica-sistema.ps1 -Detailed` |
+
+### 🚀 Comandi Principali:
+
+```powershell
+# PRIMO SETUP (una sola volta)
+.\tools\setup-dipendenze.ps1          # Installa Pandoc + PDFtk
+.\tools\verifica-sistema.ps1          # Verifica installazione
+
+# USO QUOTIDIANO  
+.\genera-pdf.ps1                      # Genera PDF mancanti
+.\genera-pdf.ps1 -Force               # Rigenera tutti i PDF
+.\genera-pdf.ps1 -Force -Verbose      # Rigenera con dettagli
+
+# TROUBLESHOOTING
+.\tools\verifica-sistema.ps1 -Detailed # Diagnostica completa
+Get-Content logs\*.log | Select -Last 10 # Ultimi log
+```
 
 ### 🔄 Flusso di Lavoro Consigliato:
 ```bash

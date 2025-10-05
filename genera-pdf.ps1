@@ -48,7 +48,12 @@ try {
     $pandocVersion = pandoc --version | Select-Object -First 1
     Write-Log "Pandoc trovato: $pandocVersion" "Green"
 } catch {
-    Write-Error "Pandoc non trovato! Installa Pandoc prima di eseguire questo script."
+    Write-Log "ERRORE: Pandoc non trovato! Installazione richiesta." "Red"
+    Write-Log "" "White"
+    Write-Log "SOLUZIONI:" "Yellow"
+    Write-Log "1. Setup automatico: .\tools\setup-dipendenze.ps1" "Green"
+    Write-Log "2. Verifica sistema: .\tools\verifica-sistema.ps1" "Green"
+    Write-Log "3. Download manuale: https://pandoc.org/" "Gray"
     exit 1
 }
 
@@ -222,7 +227,11 @@ if ($totalProcessed -gt 0 -or $Force) {
             Write-Log "PDFtk trovato: $(($pdftkVersion -split "`n")[0])" "Green"
         } catch {
             Write-Log "PDFtk non trovato! Installare PDFtk per generare la dispensa unificata." "Yellow"
-            Write-Log "Download da: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/" "Gray"
+            Write-Log "" "White"
+            Write-Log "SOLUZIONI:" "Yellow"
+            Write-Log "1. Setup automatico: .\tools\setup-dipendenze.ps1" "Green"
+            Write-Log "2. Verifica sistema: .\tools\verifica-sistema.ps1" "Green"
+            Write-Log "3. Download manuale: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/" "Gray"
         }
         
         if ($pdftkAvailable) {
