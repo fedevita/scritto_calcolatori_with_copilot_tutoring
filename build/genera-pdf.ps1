@@ -7,15 +7,26 @@ param(
 )
 
 # Configurazione logging - Crea la cartella logs se non esiste
-$logsDir = "logs"
+# Determina il percorso base del progetto (la directory che contiene build/)
+# Lo script è in build/, quindi il progetto è una directory sopra
+$projectRoot = Split-Path $PSScriptRoot -Parent
+
+# Percorsi statici del progetto - sempre gli stessi indipendentemente da dove si lancia
+$paths = @{
+    Root = $projectRoot
+    Logs = "$projectRoot\output\logs"
+    Artifacts = "$projectRoot\output\pdf"
+    Source = "$projectRoot\src\esercizi"
+}
+
+$logsDir = $paths.Logs
 if (-not (Test-Path $logsDir)) {
-    New-Item -ItemType Directory -Path $logsDir | Out-Null
+    New-Item -ItemType Directory -Path $logsDir -Force | Out-Null
 }
 
 # Crea il file di log con timestamp e percorso assoluto
 $timestamp = Get-Date -Format "yyyy-MM-dd_HH-mm-ss"
-$absoluteLogsDir = Join-Path (Get-Location) $logsDir
-$logFile = Join-Path $absoluteLogsDir "genera-pdf_$timestamp.log"
+$logFile = "$logsDir\genera-pdf_$timestamp.log"
 
 # Funzione per scrivere sia a console che a log
 function Write-Log {
@@ -51,20 +62,21 @@ try {
     Write-Log "ERRORE: Pandoc non trovato! Installazione richiesta." "Red"
     Write-Log "" "White"
     Write-Log "SOLUZIONI:" "Yellow"
-    Write-Log "1. Setup automatico: .\tools\setup-dipendenze.ps1" "Green"
-    Write-Log "2. Verifica sistema: .\tools\verifica-sistema.ps1" "Green"
+    Write-Log "1. Setup automatico: ..\tools\setup-dipendenze.ps1" "Green"
+    Write-Log "2. Verifica sistema: ..\tools\verifica-sistema.ps1" "Green"
     Write-Log "3. Download manuale: https://pandoc.org/" "Gray"
     exit 1
 }
 
 # Crea la cartella artifacts se non esiste
-$artifactsDir = "artifacts"
+$artifactsDir = $paths.Artifacts
 if (-not (Test-Path $artifactsDir)) {
-    New-Item -ItemType Directory -Path $artifactsDir | Out-Null
+    New-Item -ItemType Directory -Path $artifactsDir -Force | Out-Null
     Write-Log "Creata cartella: $artifactsDir" "Green"
 }
 # Trova tutte le cartelle categoria
-$categorieDir = Get-ChildItem -Directory -Filter "categoria-*" | Sort-Object Name
+$srcPath = $paths.Source
+$categorieDir = Get-ChildItem -Path $srcPath -Directory -Filter "categoria-*" | Sort-Object Name
 
 if ($categorieDir.Count -eq 0) {
     Write-Log "Nessuna cartella categoria trovata!" "Yellow"
@@ -104,7 +116,7 @@ foreach ($categoria in $categorieDir) {
             continue
         }
         
-        $artifactFile = Join-Path $artifactsDir ("$($categoria.Name)_$($esercizioName).pdf")
+        $artifactFile = "$artifactsDir\$($categoria.Name)_$($esercizioName).pdf"
         
         # Verifica se il PDF esiste gia nella cartella artifacts e se Force non e specificato
         if ((Test-Path $artifactFile) -and (-not $Force)) {
@@ -122,7 +134,7 @@ foreach ($categoria in $categorieDir) {
             # Eseguiamo Pandoc dalla directory dell'esercizio per accesso alle immagini
             $currentDir = Get-Location
             $esercizioDir = $markdownFile.DirectoryName
-            $absoluteArtifactFile = Join-Path $currentDir $artifactFile
+            $absoluteArtifactFile = [System.IO.Path]::GetFullPath($artifactFile)
             $markdownFileName = $markdownFile.Name
             
             # Cambia nella directory dell'esercizio per accedere alle immagini
@@ -146,7 +158,7 @@ foreach ($categoria in $categorieDir) {
             }
             
             # Crea un file temporaneo per gli errori nella directory logs (percorso assoluto)
-            $errorFile = Join-Path $absoluteLogsDir "pandoc_error_${categoria.Name}_${esercizioName}_$timestamp.tmp"
+            $errorFile = "$logsDir\pandoc_error_$($categoria.Name)_$($esercizioName)_$timestamp.tmp"
             $process = Start-Process -FilePath "pandoc" -ArgumentList $pandocArgs -NoNewWindow -Wait -PassThru -RedirectStandardError $errorFile
             
             # Gestione del file di errore
@@ -209,7 +221,7 @@ Write-Log "PDF generati: $totalProcessed" "Green"
 Write-Log "PDF saltati: $totalSkipped" "Yellow"
 Write-Log "Errori: $totalErrors" "Red"
 if ($totalProcessed -gt 0) {
-    Write-Log "Cartella output: .\artifacts\" "Cyan"
+    Write-Log "Cartella output: ..\output\pdf\" "Cyan"
 }
 Write-Log ""
 
@@ -229,14 +241,14 @@ if ($totalProcessed -gt 0 -or $Force) {
             Write-Log "PDFtk non trovato! Installare PDFtk per generare la dispensa unificata." "Yellow"
             Write-Log "" "White"
             Write-Log "SOLUZIONI:" "Yellow"
-            Write-Log "1. Setup automatico: .\tools\setup-dipendenze.ps1" "Green"
-            Write-Log "2. Verifica sistema: .\tools\verifica-sistema.ps1" "Green"
+            Write-Log "1. Setup automatico: ..\tools\setup-dipendenze.ps1" "Green"
+            Write-Log "2. Verifica sistema: ..\tools\verifica-sistema.ps1" "Green"
             Write-Log "3. Download manuale: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/" "Gray"
         }
         
         if ($pdftkAvailable) {
-            $dispensaPdf = Join-Path $artifactsDir "dispensa-completa-esercizi.pdf"
-            $dispensaTempPdf = Join-Path $artifactsDir "dispensa-temp-merge.pdf"
+            $dispensaPdf = "$artifactsDir\dispensa-completa-esercizi.pdf"
+            $dispensaTempPdf = "$artifactsDir\dispensa-temp-merge.pdf"
             
             Write-Log "Unendo tutti i PDF in una dispensa unica..." "Yellow"
             
@@ -268,9 +280,9 @@ if ($totalProcessed -gt 0 -or $Force) {
                 if ($pdftkMergeProcess.ExitCode -eq 0 -and (Test-Path $dispensaTempPdf)) {
                     Write-Log "   Merge completato, processando numerazione pagine..." "Yellow"
                     
-                    # Secondo passaggio: aggiorna i metadati, crea segnalibri e normalizza
-                    # Crea un file di metadati temporaneo
-                    $metadataFile = Join-Path $absoluteLogsDir "dispensa_metadata_$timestamp.txt"
+                    # Secondo passaggio: aggiorna i metadati semplificati
+                    # Crea un file di metadati temporaneo con formato semplificato
+                    $metadataFile = "$logsDir\dispensa_metadata_$timestamp.txt"
                     $metadataContent = @"
 InfoBegin
 InfoKey: Title
@@ -281,79 +293,53 @@ InfoValue: Preparazione Esame Calcolatori
 InfoBegin
 InfoKey: Subject
 InfoValue: Raccolta completa di esercizi per l'esame di Calcolatori
-InfoBegin
-InfoKey: Creator
-InfoValue: genera-pdf.ps1 script
-InfoBegin
-InfoKey: Producer
-InfoValue: PDFtk + Pandoc
-InfoBegin
-InfoKey: CreationDate
-InfoValue: D:$(Get-Date -Format 'yyyyMMddHHmmss')+01'00'
 "@
                     Set-Content -Path $metadataFile -Value $metadataContent -Encoding UTF8
                     
-                    # Crea file di segnalibri per una migliore navigazione
-                    $bookmarksFile = Join-Path $absoluteLogsDir "dispensa_bookmarks_$timestamp.txt"
-                    $bookmarkContent = @()
-                    $currentPage = 1
-                    
-                    foreach ($categoria in $categorieDir) {
-                        $categoryPdfs = Get-ChildItem -Path $artifactsDir -Filter "$($categoria.Name)_*.pdf" | Sort-Object Name
-                        if ($categoryPdfs.Count -gt 0) {
-                            $categoriaTitle = $categoria.Name -replace "categoria-(\d+)-", "Categoria `$1 - " -replace "-", " "
-                            $categoriaTitle = (Get-Culture).TextInfo.ToTitleCase($categoriaTitle.ToLower())
-                            
-                            $bookmarkContent += "BookmarkBegin"
-                            $bookmarkContent += "BookmarkTitle: $categoriaTitle"
-                            $bookmarkContent += "BookmarkLevel: 1"
-                            $bookmarkContent += "BookmarkPageNumber: $currentPage"
-                            
-                            foreach ($pdf in $categoryPdfs) {
-                                $esercizioName = $pdf.BaseName -replace "^$($categoria.Name)_", "" -replace "esercizio-(\d+)-", "Esercizio `$1 - " -replace "-", " "
-                                $esercizioTitle = (Get-Culture).TextInfo.ToTitleCase($esercizioName.ToLower())
-                                
-                                $bookmarkContent += "BookmarkBegin"
-                                $bookmarkContent += "BookmarkTitle: $esercizioTitle"
-                                $bookmarkContent += "BookmarkLevel: 2"
-                                $bookmarkContent += "BookmarkPageNumber: $currentPage"
-                                
-                                # Stima approssimativa delle pagine (basata sulla dimensione del file)
-                                $estimatedPages = [math]::Max(1, [math]::Round($pdf.Length / 60KB))
-                                $currentPage += $estimatedPages
-                            }
-                        }
-                    }
-                    
-                    Set-Content -Path $bookmarksFile -Value ($bookmarkContent -join "`n") -Encoding UTF8
-                    
-                    # Comando per aggiornare metadati senza compressione
+                    # Comando per aggiornare metadati con gestione warning
                     $pdftkUpdateCommand = "pdftk `"$dispensaTempPdf`" update_info `"$metadataFile`" output `"$dispensaPdf`""
                     
                     if ($Verbose) {
                         Write-Log "   Comando pdftk (update): $pdftkUpdateCommand" "Gray"
-                        Write-Log "   Segnalibri creati: $($bookmarkContent | Where-Object { $_ -match "BookmarkTitle" } | Measure-Object).Count" "Gray"
                     }
                     
-                    $pdftkUpdateProcess = Start-Process -FilePath "cmd" -ArgumentList "/c", $pdftkUpdateCommand -NoNewWindow -Wait -PassThru
+                    # Crea file temporaneo per catturare stderr di pdftk
+                    $pdftkErrorFile = "$logsDir\pdftk_update_error_$timestamp.tmp"
+                    $pdftkUpdateProcess = Start-Process -FilePath "cmd" -ArgumentList "/c", $pdftkUpdateCommand -NoNewWindow -Wait -PassThru -RedirectStandardError $pdftkErrorFile
                     
+                    # Gestione intelligente degli errori PDFtk
+                    $pdftkSuccess = $false
                     if ($pdftkUpdateProcess.ExitCode -eq 0 -and (Test-Path $dispensaPdf)) {
+                        $pdftkSuccess = $true
                         Write-Log "   Dispensa unificata generata: dispensa-completa-esercizi.pdf" "Green"
                         Write-Log "   Dimensione: $([math]::Round((Get-Item $dispensaPdf).Length / 1KB, 1)) KB" "Gray"
                         Write-Log "   PDF uniti: $($allPdfs.Count) esercizi" "Gray"
-                        Write-Log "   Metadati aggiornati e PDF compresso" "Gray"
-                        
-                        # Pulisci file temporanei
-                        if (Test-Path $dispensaTempPdf) {
-                            Remove-Item $dispensaTempPdf -ErrorAction SilentlyContinue
+                        Write-Log "   Metadati aggiornati e PDF ottimizzato" "Gray"
+                    }
+                    
+                    # Gestione warning/errori PDFtk
+                    if (Test-Path $pdftkErrorFile) {
+                        $pdftkErrors = Get-Content $pdftkErrorFile -Raw -ErrorAction SilentlyContinue
+                        if ($pdftkErrors -and $pdftkErrors.Trim() -ne "") {
+                            # Filtra warning noti non critici
+                            $criticalErrors = $pdftkErrors | Where-Object { 
+                                $_ -notmatch "unexpected case.*LoadDataFile.*continuing" -and
+                                $_ -notmatch "WARNING" -and
+                                $_ -match "Error|Fatal|failed"
+                            }
+                            
+                            if ($criticalErrors) {
+                                Write-Log "   Errori critici PDFtk: $criticalErrors" "Red"
+                                $pdftkSuccess = $false
+                            } elseif ($Verbose) {
+                                # Mostra solo in modalità verbose i warning non critici
+                                Write-Log "   Note PDFtk (non critiche): $($pdftkErrors.Trim())" "Yellow"
+                            }
                         }
-                        if (Test-Path $metadataFile) {
-                            Remove-Item $metadataFile -ErrorAction SilentlyContinue
-                        }
-                        if (Test-Path $bookmarksFile) {
-                            Remove-Item $bookmarksFile -ErrorAction SilentlyContinue
-                        }
-                    } else {
+                        Remove-Item $pdftkErrorFile -ErrorAction SilentlyContinue
+                    }
+                    
+                    if (-not $pdftkSuccess) {
                         Write-Log "   Errore durante l'aggiornamento metadati" "Red"
                         Write-Log "   Exit Code: $($pdftkUpdateProcess.ExitCode)" "Red"
                         
@@ -361,6 +347,14 @@ InfoValue: D:$(Get-Date -Format 'yyyyMMddHHmmss')+01'00'
                         if (Test-Path $dispensaTempPdf) {
                             Move-Item $dispensaTempPdf $dispensaPdf -Force
                             Write-Log "   Utilizzato PDF senza aggiornamento metadati" "Yellow"
+                        }
+                    } else {
+                        # Pulizia file temporanei dopo successo
+                        if (Test-Path $dispensaTempPdf) {
+                            Remove-Item $dispensaTempPdf -ErrorAction SilentlyContinue
+                        }
+                        if (Test-Path $metadataFile) {
+                            Remove-Item $metadataFile -ErrorAction SilentlyContinue
                         }
                     }
                 } else {

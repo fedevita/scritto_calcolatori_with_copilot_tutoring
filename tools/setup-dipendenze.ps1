@@ -46,13 +46,13 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"  # Velocizza download
 
-# Percorsi
-$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$InstallersDir = Join-Path $ScriptDir "installers"
-$LogsDir = Join-Path (Split-Path -Parent $ScriptDir) "logs"
+# Percorsi statici del progetto
+$projectRoot = Split-Path $PSScriptRoot -Parent
+$InstallersDir = "$PSScriptRoot\installers"
+$LogsDir = "$projectRoot\output\logs"
 
 # URLs per download (versioni più recenti)
-$PandocUrl = "https://github.com/jgm/pandoc/releases/latest/download/pandoc-windows-x86_64.msi"
+$PandocUrl = "https://github.com/jgm/pandoc/releases/download/3.8.1/pandoc-3.8.1-windows-x86_64.msi"
 $PDFtkUrl = "https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/pdftk_free-2.02-win-setup.exe"
 
 # === FUNZIONI UTILITY ===
@@ -72,7 +72,7 @@ function Write-Log {
     
     # Salva anche su file se la cartella logs esiste
     if (Test-Path $LogsDir) {
-        $logFile = Join-Path $LogsDir "setup-dipendenze_$(Get-Date -Format 'yyyy-MM-dd').log"
+        $logFile = "$LogsDir\setup-dipendenze_$(Get-Date -Format 'yyyy-MM-dd').log"
         $logMessage | Add-Content -Path $logFile -Encoding UTF8
     }
 }
@@ -134,9 +134,9 @@ function Get-FileFromUrl {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
         }
         
-        # Download con progress
-        $webClient = New-Object System.Net.WebClient
-        $webClient.DownloadFile($Url, $OutputPath)
+        # Download con Invoke-WebRequest (più robusto di WebClient)
+        Write-Log "Avvio download da: $Url" "INFO"
+        Invoke-WebRequest -Uri $Url -OutFile $OutputPath -UseBasicParsing
         
         Write-Log "Download completato: $(Split-Path -Leaf $OutputPath)" "SUCCESS"
         return $true
@@ -255,10 +255,10 @@ if (!$SkipPandoc) {
     } else {
         Write-Log "=== INSTALLAZIONE PANDOC ===" "INFO"
         
-        $pandocMsi = Join-Path $InstallersDir "pandoc-latest.msi"
+        $pandocMsi = "$InstallersDir\pandoc-latest.msi"
         
         # Verifica se esiste gia il file MSI locale
-        $existingMsi = Join-Path $InstallersDir "pandoc-installer.msi"
+        $existingMsi = "$InstallersDir\pandoc-installer.msi"
         if ((Test-Path $existingMsi) -and !$Force) {
             Write-Log "Trovato installer Pandoc locale: $existingMsi"
             $pandocMsi = $existingMsi
@@ -299,7 +299,7 @@ if (!$SkipPDFtk) {
     } else {
         Write-Log "=== INSTALLAZIONE PDFtk ===" "INFO"
         
-        $pdftkExe = Join-Path $InstallersDir "pdftk-setup.exe"
+        $pdftkExe = "$InstallersDir\pdftk-setup.exe"
         
         # Download PDFtk
         if (Get-FileFromUrl $PDFtkUrl $pdftkExe "PDFtk Setup") {
@@ -332,10 +332,10 @@ Write-Host "  PDFtk:  $(if ($finalPDFtk) { "✓ OK" } else { "✗ Mancante" })"
 
 if ($finalPandoc -and $finalPDFtk) {
     Write-Log "Tutte le dipendenze sono installate correttamente!" "SUCCESS"
-    Write-Host "`nPuoi ora eseguire: .\genera-pdf.ps1" -ForegroundColor Green
+    Write-Host "`nPuoi ora eseguire: .\build\genera-pdf.ps1" -ForegroundColor Green
 } else {
     Write-Log "Alcune dipendenze mancano - verifica gli errori sopra" "WARN"
     Write-Host "`nEsegui nuovamente lo script o installa manualmente le dipendenze mancanti" -ForegroundColor Yellow
 }
 
-Write-Host "`nPer verificare l'installazione: .\verifica-sistema.ps1" -ForegroundColor Cyan
+Write-Host "`nPer verificare l'installazione: .\tools\verifica-sistema.ps1" -ForegroundColor Cyan

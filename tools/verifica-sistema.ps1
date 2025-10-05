@@ -133,15 +133,19 @@ function Test-LaTeXSupport {
 }
 
 function Get-ProjectFiles {
-    $scriptDir = $PSScriptRoot
-    $projectDir = Split-Path -Parent $scriptDir
+    # Lo script è in tools/, quindi il progetto è una directory sopra
+    $projectRoot = Split-Path $PSScriptRoot -Parent
     
+    # Percorsi statici del progetto - sempre gli stessi indipendentemente da dove si lancia
     return @{
-        GeneraPDF = Join-Path $projectDir "genera-pdf.ps1"
-        SetupDipendenze = Join-Path $scriptDir "setup-dipendenze.ps1"  
-        ArtifactsDir = Join-Path $projectDir "artifacts"
-        LogsDir = Join-Path $projectDir "logs"
-        README = Join-Path $projectDir "README.md"
+        GeneraPDF = "$projectRoot\build\genera-pdf.ps1"
+        SetupDipendenze = "$PSScriptRoot\setup-dipendenze.ps1"  
+        ArtifactsDir = "$projectRoot\output\pdf"
+        LogsDir = "$projectRoot\output\logs"
+        README = "$projectRoot\README.md"
+        SourceDir = "$projectRoot\src\esercizi"
+        BuildDir = "$projectRoot\build"
+        ToolsDir = $PSScriptRoot
     }
 }
 
@@ -268,8 +272,8 @@ if (!$pandocInfo.Exists -or !$pdftkInfo.Exists) {
 
 if ($allOk) {
     Write-Host "Genera i PDF degli esercizi:" -ForegroundColor White
-    Write-Host "   .\genera-pdf.ps1" -ForegroundColor Green
-    Write-Host "   .\genera-pdf.ps1 -Force -Verbose" -ForegroundColor Green
+    Write-Host "   .\build\genera-pdf.ps1" -ForegroundColor Green
+    Write-Host "   .\build\genera-pdf.ps1 -Force -Verbose" -ForegroundColor Green
 }
 
 if ($Detailed -and (Test-Path $projectFiles.LogsDir)) {

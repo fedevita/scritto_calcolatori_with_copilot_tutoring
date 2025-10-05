@@ -4,15 +4,43 @@
 
 Progetto di allenamento per l'esame scritto di Calcolatori utilizzando **GitHub Copilot come tutor personale**. 
 
-Il repository è organizzato in categorie di esercizi basate su un compito d'esame reale, permettendo un allenamento sistematico e guidato su tutti gli argomenti principali.
+Il repository è organizzato in una **architettura pulita e strutturata** con categorie di esercizi basate su un compito d'esame reale, permettendo un allenamento sistematico e guidato su tutti gli argomenti principali.
 
-## 🎯 Obiettivo
+## �️ Architettura del Progetto
+
+```
+scritto_calcolatori_with_copilot_tutoring/
+├── src/                        # Contenuti source
+│   ├── esercizi/               # Tutti gli esercizi organizzati per categoria
+│   │   ├── categoria-1-algebra-booleana/
+│   │   ├── categoria-2-reti-combinatorie/
+│   │   ├── categoria-3-fsm-mealy/
+│   │   ├── categoria-4-fsm-moore/
+│   │   ├── categoria-5-assembly-programmi/
+│   │   └── categoria-6-assembly-procedure/
+│   └── compiti-esempio/        # Esempi di compiti d'esame
+├── build/                      # Script di automazione e build
+│   └── genera-pdf.ps1          # Script principale di generazione PDF
+├── output/                     # Risultati della generazione
+│   ├── pdf/                    # PDF generati per categoria
+│   └── logs/                   # Log di sistema e operazioni
+├── tools/                      # Strumenti di setup e verifica
+│   ├── setup-dipendenze.ps1   # Setup automatico dipendenze
+│   ├── verifica-sistema.ps1    # Verifica sistema e dipendenze
+│   └── installers/             # File di installazione
+├── docs/                       # Documentazione modulare
+└── genera-pdf.ps1              # Script di lancio (wrapper)
+```
+
+## �🎯 Obiettivo
 
 Prepararsi efficacemente all'esame di Calcolatori attraverso:
 - ✅ **Allenamento guidato** con GitHub Copilot come tutor
 - ✅ **Categorizzazione sistematica** degli esercizi per tipologia
 - ✅ **Pratica progressiva** su tutte le competenze richieste
 - ✅ **Feedback immediato** e spiegazioni dettagliate
+- ✅ **Setup automatizzato** delle dipendenze e ambiente
+- ✅ **Generazione PDF automatica** per studio offline
 
 ## 📚 Categorie di Esercizi
 
@@ -249,21 +277,30 @@ Lo script include un sistema di logging completo che traccia tutte le operazioni
 
 # TROUBLESHOOTING
 .\tools\verifica-sistema.ps1 -Detailed # Diagnostica completa
-Get-Content logs\*.log | Select -Last 10 # Ultimi log
+Get-Content output\logs\*.log | Select -Last 10 # Ultimi log
 ```
 
 ### 🔄 Flusso di Lavoro Consigliato:
 ```bash
-# 1. Studia/modifica gli esercizi nei file .md
+# 1. Studia/modifica gli esercizi nei file .md in src/esercizi/
 # 2. Genera PDF aggiornati
 .\genera-pdf.ps1 -Force
 
 # 3. Controlla i log per eventuali problemi
-Get-Content logs\genera-pdf_*.log | Select-Object -Last 20
+Get-Content output\logs\genera-pdf_*.log | Select-Object -Last 20
 
 # 4. Condividi la dispensa aggiornata
-# File: artifacts\dispensa-completa-esercizi.pdf
+# File: output\pdf\dispensa-completa-esercizi.pdf
 ```
+
+## 📖 Documentazione Completa
+
+Per informazioni dettagliate, consulta la documentazione modulare:
+
+- **[Setup e Installazione](docs/setup.md)** - Guida completa al primo setup
+- **[Generazione PDF](docs/generazione-pdf.md)** - Utilizzo avanzato del sistema di build  
+- **[Struttura Progetto](docs/struttura-progetto.md)** - Architettura e organizzazione
+- **[Troubleshooting](docs/troubleshooting.md)** - Risoluzione problemi comuni
 
 ## 🤝 Contributi
 
