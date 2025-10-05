@@ -113,11 +113,40 @@ I PDF vengono salvati nella cartella `artifacts/` con la nomenclatura:
 - `categoria-3-fsm-mealy_esercizio-1-riconoscimento-1010.pdf`
 - E così via...
 
+### 📚 Dispensa Unificata
+
+Lo script genera automaticamente una **dispensa completa** che unisce tutti gli esercizi:
+
+```
+artifacts/dispensa-completa-esercizi.pdf
+```
+
+**Caratteristiche della dispensa:**
+- **🔗 Unione intelligente**: Tutti gli 8 esercizi uniti con PDFtk
+- **📋 Metadati professionali**: Titolo, autore, data di creazione automatici
+- **🎨 Layout pulito**: Nessun numero di pagina, aspetto completamente pulito
+- **🗜️ Ottimizzazione**: PDF compresso per dimensioni ridotte
+- **📊 Ordine logico**: Esercizi organizzati per categoria progressiva
+
+**Ideale per:**
+- 👥 Condivisione con altri studenti
+- 📖 Studio completo di tutti gli argomenti
+- 🖨️ Stampa di riferimento rapido
+- 📱 Lettura mobile senza distrazioni
+
 **Note:**
 - La cartella `artifacts/` e tutti i PDF **non sono tracciati** da Git (esclusi tramite `.gitignore`)
 - I PDF vengono **rigenerati automaticamente** quando necessario
 - Lo script utilizza **Pandoc con XeLaTeX** per il rendering di formule matematiche
-- Richiede l'installazione di [Pandoc](https://pandoc.org/) nel sistema
+- Richiede l'installazione di [Pandoc](https://pandoc.org/) e [PDFtk](https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/)
+
+### 🎨 Miglioramenti Layout
+
+**PDF senza numeri di pagina:**
+- **Aspetto pulito**: Nessuna distrazione da elementi di navigazione
+- **Lettura fluida**: Focus completo sul contenuto
+- **Stampa ottimizzata**: Layout professionale per materiale di studio
+- **Margini standardizzati**: 2cm uniformi per tutti i documenti
 
 ### 📊 Sistema di Logging
 
@@ -135,14 +164,52 @@ Lo script include un sistema di logging completo che traccia tutte le operazioni
 - **Gestione errori avanzata** con distinzione tra warning e errori fatali
 
 **File generati:**
-- `logs/genera-pdf_2025-10-04_18-31-51.log` - Log completo dell'esecuzione
+- `logs/genera-pdf_YYYY-MM-DD_HH-mm-ss.log` - Log completo dell'esecuzione
 - `logs/pandoc_error_*.tmp` - File di errore temporanei (solo se rilevanti)
 
 **Note:**
 - La cartella `logs/` **non è tracciata** da Git (esclusa tramite `.gitignore`)
 - I log permettono di diagnosticare problemi di generazione PDF
 - I file di errore vengono preservati solo se contengono informazioni utili
-- I PDF locali nelle cartelle degli esercizi vengono mantenuti per riferimento durante lo sviluppo
+- Lo script gestisce automaticamente la pulizia dei file temporanei
+
+### 🛠️ Prerequisiti Tecnici
+
+**Software richiesto:**
+- [Pandoc](https://pandoc.org/) - Per la conversione Markdown → PDF
+- [PDFtk](https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/) - Per l'unione dei PDF
+- PowerShell - Per l'esecuzione dello script
+
+**Controllo automatico:**
+- Lo script verifica automaticamente la presenza di Pandoc e PDFtk
+- Fornisce istruzioni di installazione se mancanti
+
+## 📚 Come Utilizzare la Dispensa
+
+### 🎯 Per lo Studio Individuale:
+1. **Genera la dispensa completa**: `.\genera-pdf.ps1`
+2. **Studia per categoria**: La dispensa è organizzata progressivamente
+3. **Usa i PDF singoli**: Per focus su argomenti specifici
+4. **Consulta i log**: Per debugging o informazioni tecniche
+
+### 👥 Per Aiutare Altri Studenti:
+1. **Condividi la dispensa unificata**: File `dispensa-completa-esercizi.pdf`
+2. **Stampa sezioni specifiche**: Usa i PDF singoli per argomenti mirati
+3. **Aggiorna contenuto**: Modifica i Markdown e rigenera con `-Force`
+4. **Mantieni aggiornato**: Il repository è la fonte di verità
+
+### 🔄 Flusso di Lavoro Consigliato:
+```bash
+# 1. Studia/modifica gli esercizi nei file .md
+# 2. Genera PDF aggiornati
+.\genera-pdf.ps1 -Force
+
+# 3. Controlla i log per eventuali problemi
+Get-Content logs\genera-pdf_*.log | Select-Object -Last 20
+
+# 4. Condividi la dispensa aggiornata
+# File: artifacts\dispensa-completa-esercizi.pdf
+```
 
 ## 🤝 Contributi
 
