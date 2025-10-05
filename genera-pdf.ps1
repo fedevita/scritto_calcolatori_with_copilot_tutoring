@@ -131,6 +131,8 @@ foreach ($categoria in $categorieDir) {
                 "--mathml"
                 "--from=markdown"
                 "--to=pdf"
+                "-V", "pagestyle=empty"  # Rimuove header e footer inclusi i numeri di pagina
+                "-V", "geometry:margin=2cm"  # Margini standardizzati
             )
             
             if ($Verbose) {
@@ -204,6 +206,168 @@ if ($totalProcessed -gt 0) {
     Write-Log "Cartella output: .\artifacts\" "Cyan"
 }
 Write-Log ""
+
+# Generazione dispensa unificata
+if ($totalProcessed -gt 0 -or $Force) {
+    Write-Log "GENERAZIONE DISPENSA UNIFICATA" "Cyan"
+    Write-Log "===============================" "Cyan"
+    
+    try {
+        # Verifica che pdftk sia installato
+        $pdftkAvailable = $false
+        try {
+            $pdftkVersion = pdftk --version 2>$null
+            $pdftkAvailable = $true
+            Write-Log "PDFtk trovato: $(($pdftkVersion -split "`n")[0])" "Green"
+        } catch {
+            Write-Log "PDFtk non trovato! Installare PDFtk per generare la dispensa unificata." "Yellow"
+            Write-Log "Download da: https://www.pdflabs.com/tools/pdftk-the-pdf-toolkit/" "Gray"
+        }
+        
+        if ($pdftkAvailable) {
+            $dispensaPdf = Join-Path $artifactsDir "dispensa-completa-esercizi.pdf"
+            $dispensaTempPdf = Join-Path $artifactsDir "dispensa-temp-merge.pdf"
+            
+            Write-Log "Unendo tutti i PDF in una dispensa unica..." "Yellow"
+            
+            # Raccoglie tutti i PDF degli esercizi ordinati per categoria e nome
+            $allPdfs = @()
+            foreach ($categoria in $categorieDir) {
+                $categoryPdfs = Get-ChildItem -Path $artifactsDir -Filter "$($categoria.Name)_*.pdf" | Sort-Object Name
+                $allPdfs += $categoryPdfs
+            }
+            
+            if ($allPdfs.Count -gt 0) {
+                # Crea l'elenco dei file PDF per pdftk
+                $pdfList = ($allPdfs | ForEach-Object { "`"$($_.FullName)`"" }) -join " "
+                
+                # Primo passaggio: unisci i PDF in un file temporaneo
+                $pdftkMergeCommand = "pdftk $pdfList cat output `"$dispensaTempPdf`""
+                
+                if ($Verbose) {
+                    Write-Log "   Comando pdftk (merge): $pdftkMergeCommand" "Gray"
+                    Write-Log "   PDF da unire: $($allPdfs.Count)" "Gray"
+                    foreach ($pdf in $allPdfs) {
+                        Write-Log "      - $($pdf.Name)" "Gray"
+                    }
+                }
+                
+                # Esegui pdftk per il merge
+                $pdftkMergeProcess = Start-Process -FilePath "cmd" -ArgumentList "/c", $pdftkMergeCommand -NoNewWindow -Wait -PassThru
+                
+                if ($pdftkMergeProcess.ExitCode -eq 0 -and (Test-Path $dispensaTempPdf)) {
+                    Write-Log "   Merge completato, processando numerazione pagine..." "Yellow"
+                    
+                    # Secondo passaggio: aggiorna i metadati, crea segnalibri e normalizza
+                    # Crea un file di metadati temporaneo
+                    $metadataFile = Join-Path $absoluteLogsDir "dispensa_metadata_$timestamp.txt"
+                    $metadataContent = @"
+InfoBegin
+InfoKey: Title
+InfoValue: Dispensa Completa - Esercizi di Calcolatori
+InfoBegin
+InfoKey: Author
+InfoValue: Preparazione Esame Calcolatori
+InfoBegin
+InfoKey: Subject
+InfoValue: Raccolta completa di esercizi per l'esame di Calcolatori
+InfoBegin
+InfoKey: Creator
+InfoValue: genera-pdf.ps1 script
+InfoBegin
+InfoKey: Producer
+InfoValue: PDFtk + Pandoc
+InfoBegin
+InfoKey: CreationDate
+InfoValue: D:$(Get-Date -Format 'yyyyMMddHHmmss')+01'00'
+"@
+                    Set-Content -Path $metadataFile -Value $metadataContent -Encoding UTF8
+                    
+                    # Crea file di segnalibri per una migliore navigazione
+                    $bookmarksFile = Join-Path $absoluteLogsDir "dispensa_bookmarks_$timestamp.txt"
+                    $bookmarkContent = @()
+                    $currentPage = 1
+                    
+                    foreach ($categoria in $categorieDir) {
+                        $categoryPdfs = Get-ChildItem -Path $artifactsDir -Filter "$($categoria.Name)_*.pdf" | Sort-Object Name
+                        if ($categoryPdfs.Count -gt 0) {
+                            $categoriaTitle = $categoria.Name -replace "categoria-(\d+)-", "Categoria `$1 - " -replace "-", " "
+                            $categoriaTitle = (Get-Culture).TextInfo.ToTitleCase($categoriaTitle.ToLower())
+                            
+                            $bookmarkContent += "BookmarkBegin"
+                            $bookmarkContent += "BookmarkTitle: $categoriaTitle"
+                            $bookmarkContent += "BookmarkLevel: 1"
+                            $bookmarkContent += "BookmarkPageNumber: $currentPage"
+                            
+                            foreach ($pdf in $categoryPdfs) {
+                                $esercizioName = $pdf.BaseName -replace "^$($categoria.Name)_", "" -replace "esercizio-(\d+)-", "Esercizio `$1 - " -replace "-", " "
+                                $esercizioTitle = (Get-Culture).TextInfo.ToTitleCase($esercizioName.ToLower())
+                                
+                                $bookmarkContent += "BookmarkBegin"
+                                $bookmarkContent += "BookmarkTitle: $esercizioTitle"
+                                $bookmarkContent += "BookmarkLevel: 2"
+                                $bookmarkContent += "BookmarkPageNumber: $currentPage"
+                                
+                                # Stima approssimativa delle pagine (basata sulla dimensione del file)
+                                $estimatedPages = [math]::Max(1, [math]::Round($pdf.Length / 60KB))
+                                $currentPage += $estimatedPages
+                            }
+                        }
+                    }
+                    
+                    Set-Content -Path $bookmarksFile -Value ($bookmarkContent -join "`n") -Encoding UTF8
+                    
+                    # Comando per aggiornare metadati, aggiungere segnalibri e comprimere
+                    $pdftkUpdateCommand = "pdftk `"$dispensaTempPdf`" update_info `"$metadataFile`" output `"$dispensaPdf`" compress"
+                    
+                    if ($Verbose) {
+                        Write-Log "   Comando pdftk (update): $pdftkUpdateCommand" "Gray"
+                        Write-Log "   Segnalibri creati: $($bookmarkContent | Where-Object { $_ -match "BookmarkTitle" } | Measure-Object).Count" "Gray"
+                    }
+                    
+                    $pdftkUpdateProcess = Start-Process -FilePath "cmd" -ArgumentList "/c", $pdftkUpdateCommand -NoNewWindow -Wait -PassThru
+                    
+                    if ($pdftkUpdateProcess.ExitCode -eq 0 -and (Test-Path $dispensaPdf)) {
+                        Write-Log "   Dispensa unificata generata: dispensa-completa-esercizi.pdf" "Green"
+                        Write-Log "   Dimensione: $([math]::Round((Get-Item $dispensaPdf).Length / 1KB, 1)) KB" "Gray"
+                        Write-Log "   PDF uniti: $($allPdfs.Count) esercizi" "Gray"
+                        Write-Log "   Metadati aggiornati e PDF compresso" "Gray"
+                        
+                        # Pulisci file temporanei
+                        if (Test-Path $dispensaTempPdf) {
+                            Remove-Item $dispensaTempPdf -ErrorAction SilentlyContinue
+                        }
+                        if (Test-Path $metadataFile) {
+                            Remove-Item $metadataFile -ErrorAction SilentlyContinue
+                        }
+                        if (Test-Path $bookmarksFile) {
+                            Remove-Item $bookmarksFile -ErrorAction SilentlyContinue
+                        }
+                    } else {
+                        Write-Log "   Errore durante l'aggiornamento metadati" "Red"
+                        Write-Log "   Exit Code: $($pdftkUpdateProcess.ExitCode)" "Red"
+                        
+                        # Se l'aggiornamento fallisce, usa il file temporaneo come risultato finale
+                        if (Test-Path $dispensaTempPdf) {
+                            Move-Item $dispensaTempPdf $dispensaPdf -Force
+                            Write-Log "   Utilizzato PDF senza aggiornamento metadati" "Yellow"
+                        }
+                    }
+                } else {
+                    Write-Log "   Errore durante l'unione dei PDF con pdftk" "Red"
+                    Write-Log "   Exit Code: $($pdftkMergeProcess.ExitCode)" "Red"
+                }
+            } else {
+                Write-Log "   Nessun PDF degli esercizi trovato per l'unione" "Yellow"
+            }
+        }
+        
+    } catch {
+        Write-Log "   Eccezione durante la generazione della dispensa: $($_.Exception.Message)" "Red"
+    }
+    
+    Write-Log ""
+}
 
 if ($totalProcessed -gt 0) {
     Write-Log "Generazione PDF completata con successo!" "Green"
