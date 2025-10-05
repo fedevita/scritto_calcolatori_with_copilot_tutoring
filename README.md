@@ -308,18 +308,19 @@ categoria-X-argomento/
 
 ## 🤝 Contribuire
 
-### Aggiungere Nuovi Esercizi
-1. Crea cartella in `src\esercizi\categoria-X\`
-2. Usa template markdown standard
-3. Aggiungi immagini se necessarie
-4. Testa con `.\build\genera-pdf.ps1 -Verbose`
-5. Commit con messaggio descrittivo
+Per contribuire a questo progetto, consulta le **[linee guida di contribuzione](CONTRIBUTING.md)** che includono:
 
-### Migliorare Sistema
-1. Script in `tools\` per nuove funzionalità
-2. Estendi `build\genera-pdf.ps1` per features
-3. Aggiorna README per nuove sezioni
-4. Mantieni struttura documentazione centralizzata
+- 📝 **Standard messaggi commit** - Formato unificato per i commit
+- 🏗️ **Struttura esercizi** - Come aggiungere nuovi contenuti
+- 🔧 **Processo di review** - Come sottomettere modifiche
+- 🚨 **Troubleshooting** - Soluzioni ai problemi comuni
+
+### Quick Start Contribuzioni
+1. Leggi `CONTRIBUTING.md` per le convenzioni
+2. Crea cartella in `src\esercizi\categoria-X\`
+3. Segui il template markdown standard
+4. Testa con `.\build\genera-pdf.ps1 -Verbose`
+5. Commit seguendo lo standard `[TIPO] Azione | OBJ: file`
 
 ## 📄 Licenza
 
