@@ -6,6 +6,33 @@ Progetto di allenamento per l'esame scritto di Calcolatori utilizzando **GitHub 
 
 Il repository è organizzato in una **architettura pulita e strutturata** con categorie di esercizi basate su un compito d'esame reale, permettendo un allenamento sistematico e guidato su tutti gli argomenti principali.
 
+## 🛠️ Strumenti per Assembly ARM
+
+### Simulatore Online - CPUlator
+Per testare ed eseguire codice Assembly ARM utilizzare:
+
+**🔗 Link**: https://cpulator.01xz.net/
+
+**⚙️ Configurazione**:
+- **Architettura**: ARMv7
+- **Sistema**: ARMv7 generic
+- **Link diretto**: https://cpulator.01xz.net/?sys=arm
+
+### Come utilizzare CPUlator:
+1. **Seleziona ARMv7** dal menu Architecture
+2. **Scegli "ARMv7 generic"** dal menu System  
+3. **Clicca "Go"** per aprire il simulatore
+4. **Incolla il codice Assembly** nell'editor (pannello centrale)
+5. **Clicca "Compile and Load (F5)"** per compilare
+6. **Usa "Step Into (F2)"** per eseguire passo-passo
+7. **Monitora i registri** nel pannello di sinistra
+
+### Sintassi Assembly ARM supportata:
+- **Architettura**: ARMv7 (32-bit)
+- **Set di istruzioni**: ARM standard
+- **Sezioni supportate**: `.data`, `.text`, `.global`
+- **Debug**: Registri, memoria, breakpoint, watchpoint
+
 ## 🏗️ Architettura del Progetto
 
 ```
@@ -39,8 +66,8 @@ Organizzazione per **categoria tematica**:
 - **categoria-2-reti-combinatorie/** - Reti logiche, multiplexer, decoder
 - **categoria-3-fsm-mealy/** - Automi a stati finiti tipo Mealy
 - **categoria-4-fsm-moore/** - Automi a stati finiti tipo Moore
-- **categoria-5-assembly-programmi/** - Programmazione assembly, algoritmi
-- **categoria-6-assembly-procedure/** - Procedure, stack, chiamate
+- **categoria-5-assembly-programmi/** - Programmazione assembly ARM, algoritmi *(usa CPUlator)*
+- **categoria-6-assembly-procedure/** - Procedure ARM, stack, chiamate *(usa CPUlator)*
 
 #### `build/` - Automazione
 - **genera-pdf.ps1** - Engine principale per conversione Markdown→PDF con supporto LaTeX
